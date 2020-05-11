@@ -1,8 +1,8 @@
 ﻿using System;
-using System.IO;
-using System.Threading;
 using System.Collections.Generic;
+using System.IO;
 using System.IO.Ports;
+using System.Threading;
 
 namespace SharpSerial
 {
@@ -12,17 +12,17 @@ namespace SharpSerial
     // https://www.vgies.com/a-reliable-serial-port-in-c/
     public class SerialDevice : ISerialStream, IDisposable
     {
-        private readonly SerialPort serial;
+        private readonly byte[] buffer;
         private readonly List<byte> list;
         private readonly Queue<byte> queue;
-        private readonly byte[] buffer;
+        private readonly SerialPort serial;
 
         public SerialDevice(object settings)
         {
-            this.buffer = new byte[256];
-            this.list = new List<byte>(256);
-            this.queue = new Queue<byte>(256);
-            this.serial = new SerialPort();
+            buffer = new byte[256];
+            list = new List<byte>(256);
+            queue = new Queue<byte>(256);
+            serial = new SerialPort();
 
             //init serial port and launch async reader
             SerialSettings.CopyProperties(settings, serial);
@@ -53,7 +53,7 @@ namespace SharpSerial
             var dl = DateTime.Now.AddMilliseconds(toms);
             while (true)
             {
-                int b = ReadByte();
+                var b = ReadByte();
                 if (b == -1)
                 {
                     //toms=0 should return immediately with available
@@ -61,11 +61,13 @@ namespace SharpSerial
                     Thread.Sleep(1);
                     continue;
                 }
-                list.Add((byte)b);
+
+                list.Add((byte) b);
                 if (eop >= 0 && b == eop) break;
                 if (size >= 0 && list.Count >= size) break;
                 dl = DateTime.Now.AddMilliseconds(toms);
             }
+
             return list.ToArray();
         }
 
@@ -85,10 +87,14 @@ namespace SharpSerial
                 //try needed to avoid triggering the domain unhandled 
                 //exception handler when used as standalone stream
                 var stream = ar.AsyncState as Stream;
-                int count = stream.EndRead(ar);
+                var count = stream.EndRead(ar);
                 if (count > 0) //0 for closed stream
                 {
-                    lock (queue) for (var i = 0; i < count; i++) queue.Enqueue(buffer[i]);
+                    lock (queue)
+                    {
+                        for (var i = 0; i < count; i++) queue.Enqueue(buffer[i]);
+                    }
+
                     stream.BeginRead(buffer, 0, buffer.Length, ReadCallback, stream);
                 }
             });

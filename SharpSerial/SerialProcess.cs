@@ -1,7 +1,7 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
-using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace SharpSerial
@@ -10,9 +10,6 @@ namespace SharpSerial
     public class SerialProcess : ISerialStream, IDisposable
     {
         private readonly Process process;
-        private readonly int pid;
-
-        public int Pid { get { return pid; } }
 
         public SerialProcess(object settings)
         {
@@ -21,10 +18,11 @@ namespace SharpSerial
             foreach (var p in ss.GetType().GetProperties())
             {
                 if (args.Length > 0) args.Append(" ");
-                args.AppendFormat("{0}={1}", p.Name, p.GetValue(ss, null).ToString());
+                args.AppendFormat("{0}={1}", p.Name, p.GetValue(ss, null));
             }
+
             process = new Process();
-            process.StartInfo = new ProcessStartInfo()
+            process.StartInfo = new ProcessStartInfo
             {
                 FileName = typeof(SerialProcess).Assembly.Location,
                 Arguments = args.ToString(),
@@ -32,13 +30,15 @@ namespace SharpSerial
                 UseShellExecute = false,
                 RedirectStandardInput = true,
                 RedirectStandardOutput = true,
-                RedirectStandardError = false,
+                RedirectStandardError = false
             };
             EnableStandardError(process.StartInfo);
             process.Start();
-            pid = process.Id;
+            Pid = process.Id;
             ForwardStandardError(process.StandardError);
         }
+
+        public int Pid { get; }
 
         public void Dispose()
         {
@@ -73,6 +73,7 @@ namespace SharpSerial
                 var trace = process.StandardOutput.ReadToEnd();
                 throw new SerialException(line.Substring(1), trace);
             }
+
             return line;
         }
 
@@ -95,11 +96,12 @@ namespace SharpSerial
             Tools.Assert(text.StartsWith("<"), "First char < expected for {0}:{1}", text.Length, text);
             Tools.Assert(text.Length % 2 == 1, "Odd length expected for {0}:{1}", text.Length, text);
             var bytes = new byte[text.Length / 2];
-            for (int i = 0; i < bytes.Length; i++)
+            for (var i = 0; i < bytes.Length; i++)
             {
                 var b2 = text.Substring(1 + i * 2, 2);
                 bytes[i] = Convert.ToByte(b2, 16);
             }
+
             return bytes;
         }
 

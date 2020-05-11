@@ -1,30 +1,50 @@
 ﻿using System;
-using System.IO.Ports;
-using System.Globalization;
 using System.ComponentModel;
+using System.Globalization;
+using System.IO.Ports;
 using System.Text.RegularExpressions;
 
 namespace SharpSerial
 {
     public class SerialSettings
     {
-        public SerialSettings() => CopyProperties(new SerialPort(), this);
-        public SerialSettings(string portName) => CopyProperties(new SerialPort(portName), this);
-        public SerialSettings(object source) => CopyProperties(source, this);
+        public SerialSettings()
+        {
+            CopyProperties(new SerialPort(), this);
+        }
 
-        public void CopyFrom(object source) => CopyProperties(source, this);
-        public void CopyTo(object target) => CopyProperties(this, target);
+        public SerialSettings(string portName)
+        {
+            CopyProperties(new SerialPort(portName), this);
+        }
+
+        public SerialSettings(object source)
+        {
+            CopyProperties(source, this);
+        }
 
         [TypeConverter(typeof(PortNameConverter))]
         public string PortName { get; set; }
+
         [TypeConverter(typeof(BaudRateConverter))]
         public int BaudRate { get; set; }
+
         public int DataBits { get; set; }
         public Parity Parity { get; set; }
         public StopBits StopBits { get; set; }
         public Handshake Handshake { get; set; }
 
-        public static void CopyProperties(Object source, Object target)
+        public void CopyFrom(object source)
+        {
+            CopyProperties(source, this);
+        }
+
+        public void CopyTo(object target)
+        {
+            CopyProperties(this, target);
+        }
+
+        public static void CopyProperties(object source, object target)
         {
             CopyProperty(source, target, "PortName");
             CopyProperty(source, target, "BaudRate");
@@ -34,7 +54,7 @@ namespace SharpSerial
             CopyProperty(source, target, "Handshake");
         }
 
-        static void CopyProperty(Object source, Object target, string name)
+        private static void CopyProperty(object source, object target, string name)
         {
             var propertySource = source.GetType().GetProperty(name);
             var propertyTarget = target.GetType().GetProperty(name);
@@ -63,7 +83,7 @@ namespace SharpSerial
 
         public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
         {
-            return (sourceType == typeof(string));
+            return sourceType == typeof(string);
         }
 
         public override object ConvertFrom(ITypeDescriptorContext context,
@@ -82,7 +102,8 @@ namespace SharpSerial
 
     public class BaudRateConverter : TypeConverter
     {
-        public readonly static int[] BaudRates = new int[] {
+        public static readonly int[] BaudRates =
+        {
             110,
             300,
             600,
@@ -122,7 +143,7 @@ namespace SharpSerial
 
         public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
         {
-            return (sourceType == typeof(string));
+            return sourceType == typeof(string);
         }
 
         public override object ConvertFrom(ITypeDescriptorContext context,

@@ -1,16 +1,19 @@
 ﻿using System;
-using System.Text;
 using System.Diagnostics;
+using System.Text;
 
 namespace SharpSerial
 {
     public static class Stdio
     {
-        private static bool traceTimed = false;
-        private static bool traceEnabled = false;
+        private static bool traceTimed;
+        private static bool traceEnabled;
         private static readonly object locker = new object();
 
-        public static string ReadLine() => Console.ReadLine();
+        public static string ReadLine()
+        {
+            return Console.ReadLine();
+        }
 
         public static void WriteLine(string format, params object[] args)
         {
@@ -25,7 +28,6 @@ namespace SharpSerial
         public static void Trace(string format, params object[] args)
         {
             if (traceEnabled)
-            {
                 lock (locker)
                 {
                     if (traceTimed)
@@ -33,10 +35,10 @@ namespace SharpSerial
                         Console.Error.Write(DateTime.Now.ToString("HH:mm:ss.fff"));
                         Console.Error.Write(" ");
                     }
+
                     Console.Error.WriteLine(format, args);
                     Console.Error.Flush();
                 }
-            }
         }
 
         public static void EnableTrace(bool enable, bool timed)
@@ -77,12 +79,13 @@ namespace SharpSerial
                 var b2 = text.Substring(1 + i * 2, 2);
                 bytes[i] = Convert.ToByte(b2, 16);
             }
+
             return bytes;
         }
 
         public static void SetProperty(object target, string line)
         {
-            var parts = line.Split(new char[] { '=' });
+            var parts = line.Split(new[] {'='});
             if (parts.Length != 2) throw Make("Expected 2 parts in {0}", Readable(line));
             var propertyName = parts[0];
             var propertyValue = parts[1];
@@ -121,11 +124,9 @@ namespace SharpSerial
         {
             var sb = new StringBuilder();
             foreach (var c in text)
-            {
-                if (Char.IsControl(c)) sb.Append(((int)c).ToString("X2"));
-                else if (Char.IsWhiteSpace(c)) sb.Append(((int)c).ToString("X2"));
+                if (char.IsControl(c)) sb.Append(((int) c).ToString("X2"));
+                else if (char.IsWhiteSpace(c)) sb.Append(((int) c).ToString("X2"));
                 else sb.Append(c);
-            }
             return sb.ToString();
         }
 

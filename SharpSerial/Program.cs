@@ -1,11 +1,10 @@
 ﻿using System;
-using System.Text;
 
 namespace SharpSerial
 {
-    partial class Program
+    internal class Program
     {
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             AppDomain.CurrentDomain.UnhandledException += Tools.ExceptionHandler;
 
@@ -27,11 +26,12 @@ namespace SharpSerial
                     Stdio.Trace("{0}", line);
                     if (line.StartsWith("$"))
                     {
-                        var parts = line.Split(new char[] { ',' });
+                        var parts = line.Split(new[] {','});
                         switch (parts[0])
                         {
                             case "$r":
-                                if (parts.Length != 4) throw Tools.Make("Expected 4 parts in {0}", Tools.Readable(line));
+                                if (parts.Length != 4)
+                                    throw Tools.Make("Expected 4 parts in {0}", Tools.Readable(line));
                                 var rSize = ParseInt(line, parts[1], 1);
                                 var rEop = ParseInt(line, parts[2], 2);
                                 var rToms = ParseInt(line, parts[3], 3);
@@ -54,13 +54,15 @@ namespace SharpSerial
                     {
                         throw Tools.Make("Unknown command {0}", Tools.Readable(line));
                     }
+
                     line = Stdio.ReadLine();
                 }
             }
+
             Environment.Exit(0);
         }
 
-        static int ParseInt(string line, string part, int index)
+        private static int ParseInt(string line, string part, int index)
         {
             if (int.TryParse(part, out var value)) return value;
             throw Tools.Make("Invalid int at param {0} of {1}", index, Tools.Readable(line));
